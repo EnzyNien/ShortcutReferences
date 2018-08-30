@@ -1,0 +1,127 @@
+﻿{% load staticfiles %}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Сервис создания коротких ссылок</title>
+    <meta name="description" content="Сервис создания коротких ссылок">
+    
+    {% block meta %}
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    {% endblock %}
+
+    {% block css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}">
+    {% endblock %}
+
+    {% block js %}
+        <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
+        <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    {% endblock %}
+    
+    {% block fonts %}
+        <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&amp;subset=cyrillic" rel="stylesheet">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+    {% endblock %}
+</head>
+
+<body>
+  <div class="py-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="">Сервис создания коротких ссылок</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="py-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <form class="main_form">
+            {% csrf_token %}
+            <div class="form-group">
+              <label>Сокращаемый URL адрес</label>
+              <input type="text" class="form-control" placeholder="URL" name="real_url" id="real_url">
+              <small class="form-text text-muted">Введите ссылку, которую необходимо сократить</small>
+              <small class="form-text text-danger" id="real_url_err"></small>
+            </div>
+            <div class="form-group">
+              <label>Максимальное количество переходов по ссылке
+                <br>
+              </label>
+              <input type="number" class="form-control" placeholder="количество переходов" name="max_following" id="max_following" min="{{min_mf}}" max="{{max_mf}}" value="{{max_mf}}">
+              <small class="form-text text-danger" id="max_following_err"></small>
+            </div>
+            <button type="submit" class="btn btn-primary" id="get_short_link">Получить короткую ссылку
+              <br>
+            </button>
+
+            <div class="form-group my-3 ">
+              <label><h4>Результат:</h4></label>
+            </div>
+            <div class="form-group">
+              <label>Короткая ссылка:</label>
+              <input type="text" class="form-control" name="short_url" id="short_url" readonly>
+              <small class="form-text text-success" id="short_url_create"></small>
+            </div>
+            <div class="form-group">
+              <label>Всего возможных переходов:</label>
+              <input type="number" class="form-control" name="short_url" id="max_following_ret" readonly>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+     
+<script>
+
+    function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie != '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+    }
+
+    function return_ajax_resp(url, other_data) {
+    $.ajax({
+        type: 'post',
+        url: url,
+        data: $.extend({ 'csrfmiddlewaretoken': getCookie('csrftoken') }, other_data),
+        success: function (data, textStatus) {
+            $("#short_url").val(data['short_url']);
+            $("#max_following_ret").val(data['max_following_ret']);
+            $.each(data['errors'], function (index, value) {
+                $("#" + value['name']).text(value['err']);
+            });
+
+        }}); 
+    }
+
+    $("#get_short_link").click(function () {
+        var queryString = {
+            "max_following": $("#max_following").val(),
+            "real_url": encodeURIComponent($("#real_url").val()),
+        };
+        return_ajax_resp('/add_url/', queryString);
+        return false
+    });
+
+
+</script>
+</body>
+</html>
